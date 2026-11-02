@@ -91,7 +91,7 @@ private fun ToggleSegment(label: String, selected: Boolean, modifier: Modifier, 
 
 @Composable
 fun HomeScreen(onDashboard: () -> Unit) {
-    var updated by remember { mutableStateOf(nowTime()) }
+    val now by rememberNow()
     var live by remember { mutableStateOf(true) }
 
     Column(
@@ -102,12 +102,12 @@ fun HomeScreen(onDashboard: () -> Unit) {
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Text(
-            text = "Updated $updated",
+            text = updatedLabel(),
             fontFamily = GardenFont,
             fontSize = 13.sp,
             color = Ink,
             modifier = Modifier
-                .clickable { updated = nowTime() }
+                .clickable { AppSettings.lastUpdated = Date() }
                 .padding(start = 12.dp, top = 4.dp, bottom = 8.dp, end = 12.dp)
         )
 
