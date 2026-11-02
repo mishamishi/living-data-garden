@@ -14,19 +14,29 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNav() {
     val nav = rememberNavController()
+
     NavHost(navController = nav, startDestination = Screen.Loading.route) {
+
         composable(Screen.Loading.route) {
-            LoadingScreen(onFinished = {
-                nav.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Loading.route) { inclusive = true }
+            LoadingScreen(
+                onFinished = {
+                    nav.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Loading.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
+
         composable(Screen.Home.route) {
-            HomeScreen(onDashboard = { nav.navigate(Screen.Dashboard.route) })
+            HomeScreen(
+                onDashboard = { nav.navigate(Screen.Dashboard.route) }
+            )
         }
+
         composable(Screen.Dashboard.route) {
-            DashboardScreen(onHome = { nav.popBackStack() })
+            DashboardScreen(
+                onHome = { nav.popBackStack() }
+            )
         }
     }
 }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,18 +14,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
-import java.util.*
-
-val GardenFont = FontFamily(
-    Font(R.font.cs_sullivan_pixel, FontWeight.Normal)
-)
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RuledText(text: String, modifier: Modifier = Modifier) {
@@ -41,7 +34,6 @@ fun RuledText(text: String, modifier: Modifier = Modifier) {
         modifier = modifier.drawBehind {
             layout?.let { l ->
                 for (i in 0 until l.lineCount) {
-                    // Línea pegada justo debajo del texto (- 3dp para ajustar la altura)
                     val y = l.getLineBottom(i) - 3.dp.toPx()
                     drawLine(
                         color = Color(0xFF1A1A1A),
@@ -61,7 +53,13 @@ fun LoadingScreen(onFinished: () -> Unit) {
     var airStatusText by remember { mutableStateOf("Air data from Open-Meteo") }
     var isSyncing by remember { mutableStateOf(false) }
 
-    // Actualiza la hora dinámicamente cada 10 segundos
+    // Goes to Home after 6 seconds
+    LaunchedEffect(Unit) {
+        delay(2500)
+        onFinished()
+    }
+
+    // Updates the time every 10 seconds
     LaunchedEffect(Unit) {
         while (true) {
             delay(10000)
@@ -83,7 +81,6 @@ fun LoadingScreen(onFinished: () -> Unit) {
             .padding(start = 24.dp, end = 24.dp, top = 64.dp, bottom = 32.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        // Logotipo ligeramente más abajo
         Spacer(Modifier.weight(0.5f))
 
         Image(
@@ -94,7 +91,6 @@ fun LoadingScreen(onFinished: () -> Unit) {
 
         Spacer(Modifier.weight(0.7f))
 
-        // Bloque central unido: Hora + Texto principal con sus líneas ajustadas
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
                 text = updateTimeString,
@@ -103,7 +99,6 @@ fun LoadingScreen(onFinished: () -> Unit) {
                 color = Color(0xFF1A1A1A),
                 modifier = Modifier.padding(bottom = 4.dp)
             )
-
             RuledText(
                 text = "Step into the garden where \n the air, water and light bloom \n from data around you",
                 modifier = Modifier.fillMaxWidth()
@@ -112,11 +107,8 @@ fun LoadingScreen(onFinished: () -> Unit) {
 
         Spacer(Modifier.weight(0.6f))
 
-        // Pie de página: Las 3 categorías en una sola línea separadas equitativamente
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -146,34 +138,6 @@ fun LoadingScreen(onFinished: () -> Unit) {
                     isSyncing = false
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun HomeScreen(onDashboard: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Home")
-        Button(onClick = onDashboard) {
-            Text("Dashboard")
-        }
-    }
-}
-
-@Composable
-fun DashboardScreen(onHome: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Dashboard")
-        Button(onClick = onHome) {
-            Text("Home")
         }
     }
 }
