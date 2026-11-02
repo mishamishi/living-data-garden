@@ -1,16 +1,18 @@
 package com.example.livingdatagarden
 
+import androidx.compose.runtime.Composable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -90,24 +92,33 @@ private fun SparkChart(values: List<Float>, color: Color, modifier: Modifier = M
 
 @Composable
 private fun FlowerCard(stat: FlowerStat) {
-    Box(Modifier.fillMaxWidth().height(128.dp)) {
-        TexturedBox(R.drawable.bg_dash_card, Modifier.fillMaxSize().padding(start = 18.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(132.dp)
+    ) {
+        TexturedBox(R.drawable.bg_dash_card, Modifier.fillMaxSize()) {
             Row(
-                Modifier.fillMaxSize().padding(start = 22.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
+                Modifier
+                    .fillMaxSize()
+                    .padding(start = 24.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(stat.flowerRes),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.width(76.dp).fillMaxHeight()
+                    modifier = Modifier.width(72.dp).fillMaxHeight()
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(10.dp))
                 Column(
                     Modifier.weight(1f).fillMaxHeight(),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(stat.value, fontFamily = GardenFont, fontSize = 28.sp, color = InkColor)
                         Spacer(Modifier.width(6.dp))
                         Text(
@@ -152,11 +163,31 @@ private fun FlowerCard(stat: FlowerStat) {
                 }
             }
         }
-        Image(
-            painter = painterResource(R.drawable.ic_info),
-            contentDescription = "Info",
-            modifier = Modifier.align(Alignment.CenterStart).size(40.dp)
-        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = (-14).dp)
+                .size(36.dp)
+                .background(Color(0xFFD4E89C), shape = CircleShape)
+                .drawBehind {
+                    drawCircle(
+                        color = InkColor,
+                        radius = size.minDimension / 2,
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
+                }
+                .clickable { },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "i",
+                fontFamily = GardenFont,
+                fontSize = 18.sp,
+                color = InkColor,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -216,78 +247,106 @@ fun DashboardScreen(onHome: () -> Unit) {
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFE1FDA1))))
             .systemBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            Text(
-                text = updatedLabel(),
-                fontFamily = GardenFont,
-                fontSize = 16.sp,
-                color = InkColor,
-                modifier = Modifier
-                    .clickable { AppSettings.lastUpdated = Date() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(top = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Electricity data from Electricity Maps", fontFamily = GardenFont, fontSize = 7.5.sp, color = InkColor)
-            Text("Water data from CONAGUA", fontFamily = GardenFont, fontSize = 7.5.sp, color = InkColor)
-            Text("Air data from Open-Meteo", fontFamily = GardenFont, fontSize = 7.5.sp, color = InkColor)
-        }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Text(
+                    text = updatedLabel(),
+                    fontFamily = GardenFont,
+                    fontSize = 16.sp,
+                    color = InkColor,
+                    modifier = Modifier
+                        .clickable { AppSettings.lastUpdated = Date() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
 
-        Spacer(Modifier.height(20.dp))
-        TexturedBox(R.drawable.bg_bubble, Modifier.fillMaxWidth().height(64.dp)) {
-            Text(
-                text = "Air’s quality is great today, so the air flower bloomed. Water and light are doing great as well.",
-                fontFamily = GardenFont,
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
-                color = InkColor,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Text("Electricity data from Electricity Maps", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
+                Text("Water data from CONAGUA", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
+                Text("Air data from Open-Meteo", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
+            }
+
+            Spacer(Modifier.height(4.dp))
+            TexturedBox(R.drawable.bg_bubble, Modifier.fillMaxWidth().height(64.dp)) {
+                Text(
+                    text = "Air’s quality is great today, so the air flower bloomed. Water and light are doing great as well.",
+                    fontFamily = GardenFont,
+                    fontSize = 14.sp,
+                    lineHeight = 18.sp,
+                    color = InkColor,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            Spacer(Modifier.height(2.dp))
+            stats.forEach { stat ->
+                FlowerCard(stat)
+            }
+            HealthCard()
         }
 
         Spacer(Modifier.height(8.dp))
-        stats.forEach { stat ->
-            FlowerCard(stat)
-            Spacer(Modifier.height(8.dp))
-        }
-        HealthCard()
 
-        Spacer(Modifier.height(16.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Bottom
         ) {
-            Image(
-                painter = painterResource(R.drawable.logo_ldg),
-                contentDescription = "Living Data Garden",
-                modifier = Modifier.width(150.dp)
-            )
             Box(
-                Modifier
-                    .width(150.dp)
-                    .height(84.dp)
-                    .clickable(onClick = onHome)
+                modifier = Modifier
+                    .weight(1f)
+                    .height(96.dp),
+                contentAlignment = Alignment.BottomStart
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.logo_ldg),
+                    contentDescription = "Living Data Garden",
+                    modifier = Modifier.fillMaxWidth(0.95f),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(96.dp)
+                    .clickable(onClick = onHome),
+                contentAlignment = Alignment.BottomEnd
             ) {
                 TexturedBox(
                     R.drawable.bg_expand,
-                    Modifier.align(Alignment.BottomStart).fillMaxWidth().height(70.dp)
+                    Modifier.fillMaxWidth().height(78.dp)
                 ) {
-                    Column(Modifier.padding(start = 14.dp)) {
-                        Text("Hide", fontFamily = GardenFont, fontSize = 11.sp, color = MutedColor)
-                        Text("Dashboard", fontFamily = GardenFont, fontSize = 19.sp, color = InkColor)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(start = 14.dp, top = 8.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("Hide", fontFamily = GardenFont, fontSize = 13.sp, color = MutedColor)
+                        Text("Dashboard", fontFamily = GardenFont, fontSize = 22.sp, color = InkColor)
                     }
                 }
                 Image(
                     painter = painterResource(R.drawable.ic_hide_circle),
                     contentDescription = null,
-                    modifier = Modifier.align(Alignment.TopEnd).size(48.dp)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(54.dp)
                 )
             }
         }
