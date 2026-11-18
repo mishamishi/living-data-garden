@@ -11,7 +11,7 @@ https://readymag.website/u1098496475/5404817/welcometothegarden/
 𖡼.𖤣 𖥧 𖡼.𖤣𖥧 . 𖡼.𖤣 𖥧 𖡼.𖤣 𖥧
 
 ## Status
-Early stage. At the momment the app covers the visual interface and navigation only. Live data, forecasting and AI features are being drafted but not build in just yet, not built yet.
+Early stage. The app now has the visual interface, navigation and live data (Open-Meteo). Forecasting and AI features are still being drafted, not built yet.
 
 ## Screens
 1. **Loading**: logo and tagline, then moves to Home automatically
@@ -32,5 +32,14 @@ Flow: Loading → Home ⇄ Dashboard
 - Min SDK: API 24
 - Design and prototype in Figma
 - Font: CS Sullivan Pixel
+- Live data: Open-Meteo (free, no API key)
+- Kotlin coroutines + ViewModel
+
+## How the flowers grow ✿
+- Air flower → air quality (US AQI)
+- Water flower → soil moisture
+- Energy/light flower → sunlight
+
+All three read from Open-Meteo. More in [docs/DATA.md](docs/DATA.md)
 
 ## Just Getting started ⸙ ˚࿔

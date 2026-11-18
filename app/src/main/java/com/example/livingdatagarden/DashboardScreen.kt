@@ -28,7 +28,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Date
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.example.livingdatagarden.data.FlowerReading
+import com.example.livingdatagarden.data.FlowerState
+import com.example.livingdatagarden.data.gardenMessage
 
 private val InkColor = Color(0xFF1A1A1A)
 private val MutedColor = Color(0xFF6B6B6B)
@@ -42,7 +46,8 @@ private data class FlowerStat(
     val chartColor: Color,
     val fill: Float,
     val series: List<Float>,
-    val name: String
+    val name: String,
+    val state: FlowerState = FlowerState.BLOOMING
 )
 
 @Composable
@@ -108,6 +113,7 @@ private fun FlowerCard(stat: FlowerStat) {
                     painter = painterResource(stat.flowerRes),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
+                    colorFilter = flowerStateFilter(stat.state),
                     modifier = Modifier.width(72.dp).fillMaxHeight()
                 )
                 Spacer(Modifier.width(10.dp))
@@ -132,7 +138,7 @@ private fun FlowerCard(stat: FlowerStat) {
                         Column(Modifier.width(92.dp), horizontalAlignment = Alignment.End) {
                             Text(stat.status, fontFamily = GardenFont, fontSize = 11.sp, color = stat.color)
                             Spacer(Modifier.height(2.dp))
-                            StatusBar(stat.fill, stat.color, Modifier.fillMaxWidth())
+                            StatusBar(stat.fill.coerceIn(0f, 1f), stat.color, Modifier.fillMaxWidth())
                         }
                     }
                     Text("Last 24 hours", fontFamily = GardenFont, fontSize = 10.sp, color = MutedColor)
@@ -177,7 +183,8 @@ private fun FlowerCard(stat: FlowerStat) {
                         style = Stroke(width = 1.5.dp.toPx())
                     )
                 }
-                .clickable { },
+                .clickable { }
+                .semantics { contentDescription = "About the ${stat.name}" },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -192,7 +199,7 @@ private fun FlowerCard(stat: FlowerStat) {
 }
 
 @Composable
-private fun HealthCard() {
+private fun HealthCard(health: Float) {
     TexturedBox(R.drawable.bg_dash_health, Modifier.fillMaxWidth().height(66.dp)) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 20.dp),
@@ -213,33 +220,26 @@ private fun HealthCard() {
                     Text("Blooming", fontFamily = GardenFont, fontSize = 12.sp, color = InkColor)
                 }
                 Spacer(Modifier.height(4.dp))
-                StatusBar(0.6f, Color(0xFFD9F5A5), Modifier.fillMaxWidth())
+                StatusBar(health.coerceIn(0f, 1f), Color(0xFFD9F5A5), Modifier.fillMaxWidth())
             }
         }
     }
 }
 
 @Composable
-fun DashboardScreen(onHome: () -> Unit) {
-    val stats = listOf(
+fun DashboardScreen(state: GardenUiState, onHome: () -> Unit, onRefresh: () -> Unit) {
+    val snapshot = state.snapshot
+    val tz = gardenTimeZone(snapshot)
+    fun stat(res: Int, reading: FlowerReading?, label: String, color: Color, chart: Color, name: String) =
         FlowerStat(
-            R.drawable.dash_flower_air, "72", "Air quality\nindex (AQI)", "Blooming",
-            Color(0xFFFFB3C7), Color(0xFFC3A8F0), 0.54f,
-            listOf(0.25f, 0.30f, 0.38f, 0.50f, 0.55f, 0.50f, 0.42f, 0.40f, 0.48f, 0.55f),
-            "Air flower"
-        ),
-        FlowerStat(
-            R.drawable.dash_flower_water, "78%", "Soil\nmoisture", "Blooming",
-            Color(0xFF7CC4E8), Color(0xFF7CC4E8), 0.54f,
-            listOf(0.40f, 0.45f, 0.35f, 0.28f, 0.25f, 0.30f, 0.55f, 0.70f, 0.75f, 0.78f),
-            "Water flower"
-        ),
-        FlowerStat(
-            R.drawable.dash_flower_energy, "82%", "Light\nlevel", "Blooming",
-            Color(0xFFF2C14E), Color(0xFFF2C14E), 0.55f,
-            listOf(0.85f, 0.70f, 0.45f, 0.25f, 0.15f, 0.15f, 0.25f, 0.45f, 0.70f, 0.82f),
-            "Energy flower"
+            res, reading?.valueText ?: "–", label, reading?.state?.label ?: "–", color, chart,
+            reading?.health ?: 0f, reading?.series.orEmpty(), name,
+            reading?.state ?: FlowerState.BLOOMING
         )
+    val stats = listOf(
+        stat(R.drawable.dash_flower_air, snapshot?.air, "Air quality\nindex (AQI)", Color(0xFFFFB3C7), Color(0xFFC3A8F0), "Air flower"),
+        stat(R.drawable.dash_flower_water, snapshot?.water, "Soil\nmoisture", Color(0xFF7CC4E8), Color(0xFF7CC4E8), "Water flower"),
+        stat(R.drawable.dash_flower_energy, snapshot?.energy, "Light\nlevel", Color(0xFFF2C14E), Color(0xFFF2C14E), "Energy flower")
     )
 
     Column(
@@ -259,12 +259,12 @@ fun DashboardScreen(onHome: () -> Unit) {
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Text(
-                    text = updatedLabel(),
+                    text = updatedLabel(snapshot?.fetchedAt, tz, state.isRefreshing, state.error != null),
                     fontFamily = GardenFont,
                     fontSize = 16.sp,
                     color = InkColor,
                     modifier = Modifier
-                        .clickable { AppSettings.lastUpdated = Date() }
+                        .clickable(onClick = onRefresh)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
@@ -273,15 +273,19 @@ fun DashboardScreen(onHome: () -> Unit) {
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Text("Electricity data from Electricity Maps", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
-                Text("Water data from CONAGUA", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
                 Text("Air data from Open-Meteo", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
+                Text("Water data from Open-Meteo", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
+                Text("Light data from Open-Meteo", fontFamily = GardenFont, fontSize = 7.sp, color = InkColor)
             }
 
             Spacer(Modifier.height(4.dp))
             TexturedBox(R.drawable.bg_bubble, Modifier.fillMaxWidth().height(64.dp)) {
                 Text(
-                    text = "Air’s quality is great today, so the air flower bloomed. Water and light are doing great as well.",
+                    text = when {
+                        snapshot != null -> gardenMessage(snapshot)
+                        state.error != null -> "The garden can’t hear the sky right now. Tap the time above to try again."
+                        else -> "The garden is listening for today’s air, water and light…"
+                    },
                     fontFamily = GardenFont,
                     fontSize = 14.sp,
                     lineHeight = 18.sp,
@@ -294,7 +298,7 @@ fun DashboardScreen(onHome: () -> Unit) {
             stats.forEach { stat ->
                 FlowerCard(stat)
             }
-            HealthCard()
+            HealthCard(snapshot?.gardenHealth ?: 0f)
         }
 
         Spacer(Modifier.height(8.dp))
@@ -343,7 +347,7 @@ fun DashboardScreen(onHome: () -> Unit) {
                 }
                 Image(
                     painter = painterResource(R.drawable.ic_hide_circle),
-                    contentDescription = null,
+                    contentDescription = "Hide dashboard",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(54.dp)
@@ -356,5 +360,5 @@ fun DashboardScreen(onHome: () -> Unit) {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun DashboardPreview() {
-    DashboardScreen(onHome = {})
+    DashboardScreen(state = previewState, onHome = {}, onRefresh = {})
 }

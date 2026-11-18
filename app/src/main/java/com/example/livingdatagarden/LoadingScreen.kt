@@ -17,9 +17,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun RuledText(text: String, modifier: Modifier = Modifier) {
@@ -48,23 +45,11 @@ fun RuledText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LoadingScreen(onFinished: () -> Unit) {
-    var updateTimeString by remember { mutableStateOf("Updated 14:32") }
-    var airStatusText by remember { mutableStateOf("Air data from Open-Meteo") }
-    var isSyncing by remember { mutableStateOf(false) }
-
-    // Goes to Home after 6 seconds
+fun LoadingScreen(state: GardenUiState, onFinished: () -> Unit) {
+    // Goes to Home after 2.5 seconds
     LaunchedEffect(Unit) {
         delay(2500)
         onFinished()
-    }
-
-    // Updates the time every 10 seconds
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(10000)
-            updateTimeString = "Updated " + SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-        }
     }
 
     Column(
@@ -93,7 +78,9 @@ fun LoadingScreen(onFinished: () -> Unit) {
 
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
-                text = updateTimeString,
+                text = state.snapshot?.let {
+                    updatedLabel(it.fetchedAt, gardenTimeZone(it))
+                } ?: "Waking the garden…",
                 fontFamily = GardenFont,
                 fontSize = 12.sp,
                 color = Color(0xFF1A1A1A),
@@ -113,30 +100,25 @@ fun LoadingScreen(onFinished: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Electricity data from Electricity Maps",
+                text = "Air data from Open-Meteo",
                 fontFamily = GardenFont,
                 fontSize = 7.5.sp,
                 color = Color(0xFF555555),
                 maxLines = 1
             )
             Text(
-                text = "Water data from CONAGUA",
+                text = "Water data from Open-Meteo",
                 fontFamily = GardenFont,
                 fontSize = 7.5.sp,
                 color = Color(0xFF555555),
                 maxLines = 1
             )
             Text(
-                text = if (isSyncing) "Syncing..." else airStatusText,
+                text = "Light data from Open-Meteo",
                 fontFamily = GardenFont,
                 fontSize = 7.5.sp,
-                color = Color(0xFF1A1A1A),
-                maxLines = 1,
-                modifier = Modifier.clickable {
-                    isSyncing = true
-                    airStatusText = "Air data updated!"
-                    isSyncing = false
-                }
+                color = Color(0xFF555555),
+                maxLines = 1
             )
         }
     }
